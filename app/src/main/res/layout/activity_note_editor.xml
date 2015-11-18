@@ -1,0 +1,874 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#101010"
+    tools:context=".NoteEditorActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?android:actionBarSize"
+            android:background="@color/colorBackBlack" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/note_height"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="@dimen/key_width"
+                android:layout_height="@dimen/note_height"
+                android:background="@color/colorBorder" />
+
+            <HorizontalScrollView
+                android:id="@+id/rulerHScrollView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/rulerContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="96dp"
+                        android:layout_height="@dimen/note_height"
+                        android:background="@drawable/left_border"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="@dimen/key_width"
+                            android:layout_height="@dimen/note_height"
+                            android:gravity="center_vertical"
+                            android:text=" 1" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="96dp"
+                        android:layout_height="@dimen/note_height"
+                        android:background="@drawable/left_border"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="@dimen/key_width"
+                            android:layout_height="@dimen/note_height"
+                            android:gravity="center_vertical"
+                            android:text=" 2" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="96dp"
+                        android:layout_height="@dimen/note_height"
+                        android:background="@drawable/left_border"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="@dimen/key_width"
+                            android:layout_height="@dimen/note_height"
+                            android:gravity="center_vertical"
+                            android:text=" 3" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="96dp"
+                        android:layout_height="@dimen/note_height"
+                        android:background="@drawable/left_border"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="@dimen/key_width"
+                            android:layout_height="@dimen/note_height"
+                            android:gravity="center_vertical"
+                            android:text=" 4" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="96dp"
+                        android:layout_height="@dimen/note_height"
+                        android:background="@drawable/left_border"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="@dimen/key_width"
+                            android:layout_height="@dimen/note_height"
+                            android:gravity="center_vertical"
+                            android:text=" 5" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="96dp"
+                        android:layout_height="@dimen/note_height"
+                        android:background="@drawable/left_border"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="@dimen/key_width"
+                            android:layout_height="@dimen/note_height"
+                            android:gravity="center_vertical"
+                            android:text=" 6" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="96dp"
+                        android:layout_height="@dimen/note_height"
+                        android:background="@drawable/left_border"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="@dimen/key_width"
+                            android:layout_height="@dimen/note_height"
+                            android:gravity="center_vertical"
+                            android:text=" 7" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="96dp"
+                        android:layout_height="@dimen/note_height"
+                        android:background="@drawable/left_border"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="@dimen/key_width"
+                            android:layout_height="@dimen/note_height"
+                            android:gravity="center_vertical"
+                            android:text=" 8" />
+
+                    </LinearLayout>
+                </LinearLayout>
+
+            </HorizontalScrollView>
+        </LinearLayout>
+
+        <ScrollView
+            android:id="@+id/scrollView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/colorBackground"
+            android:fillViewport="false">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="3072dp"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:id="@+id/keyContainer"
+                        android:layout_width="@dimen/key_width"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    B"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    A#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    A"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    G#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    G"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    F#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    F"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    E"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    D#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    D"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    C#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    C8"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    B"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    A#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    A"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    G#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    G"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    F#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    F"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    E"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    D#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    D"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    C#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    C7"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    B"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    A#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    A"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    G#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    G"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    F#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    F"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    E"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    D#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    D"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    C#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    C6"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    B"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    A#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    A"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    G#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    G"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    F#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    F"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    E"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    D#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    D"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    C#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    C5"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    B"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    A#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    A"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    G#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    G"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    F#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    F"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    E"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    D#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    D"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    C#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    C4"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    B"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    A#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    A"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    G#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    G"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    F#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    F"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    E"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    D#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    D"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    C#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    C3"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    B"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    A#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    A"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    G#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    G"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    F#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    F"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    E"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    D#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    D"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_black"
+                            android:text="    C#"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/note_height"
+                            android:background="@drawable/key_white"
+                            android:text="    C2"
+                            android:textAlignment="textStart"
+                            android:textColor="#000000" />
+
+                    </LinearLayout>
+
+                    <HorizontalScrollView
+                        android:id="@+id/noteHScrollView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <LinearLayout
+                            android:id="@+id/noteVContainer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical">
+
+                        </LinearLayout>
+
+                    </HorizontalScrollView>
+
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+</FrameLayout>
