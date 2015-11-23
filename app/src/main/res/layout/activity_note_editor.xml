@@ -22,10 +22,12 @@
             android:layout_height="@dimen/note_height"
             android:orientation="horizontal">
 
-            <TextView
+            <Switch
                 android:layout_width="@dimen/key_width"
                 android:layout_height="@dimen/note_height"
-                android:background="@color/colorBorder" />
+                android:text="Edit"
+                android:checked="true"
+                android:id="@+id/editSwitch" />
 
             <HorizontalScrollView
                 android:id="@+id/rulerHScrollView"
@@ -38,125 +40,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="96dp"
-                        android:layout_height="@dimen/note_height"
-                        android:background="@drawable/left_border"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="@dimen/key_width"
-                            android:layout_height="@dimen/note_height"
-                            android:gravity="center_vertical"
-                            android:text=" 1" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="96dp"
-                        android:layout_height="@dimen/note_height"
-                        android:background="@drawable/left_border"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="@dimen/key_width"
-                            android:layout_height="@dimen/note_height"
-                            android:gravity="center_vertical"
-                            android:text=" 2" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="96dp"
-                        android:layout_height="@dimen/note_height"
-                        android:background="@drawable/left_border"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="@dimen/key_width"
-                            android:layout_height="@dimen/note_height"
-                            android:gravity="center_vertical"
-                            android:text=" 3" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="96dp"
-                        android:layout_height="@dimen/note_height"
-                        android:background="@drawable/left_border"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="@dimen/key_width"
-                            android:layout_height="@dimen/note_height"
-                            android:gravity="center_vertical"
-                            android:text=" 4" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="96dp"
-                        android:layout_height="@dimen/note_height"
-                        android:background="@drawable/left_border"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="@dimen/key_width"
-                            android:layout_height="@dimen/note_height"
-                            android:gravity="center_vertical"
-                            android:text=" 5" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="96dp"
-                        android:layout_height="@dimen/note_height"
-                        android:background="@drawable/left_border"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="@dimen/key_width"
-                            android:layout_height="@dimen/note_height"
-                            android:gravity="center_vertical"
-                            android:text=" 6" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="96dp"
-                        android:layout_height="@dimen/note_height"
-                        android:background="@drawable/left_border"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="@dimen/key_width"
-                            android:layout_height="@dimen/note_height"
-                            android:gravity="center_vertical"
-                            android:text=" 7" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="96dp"
-                        android:layout_height="@dimen/note_height"
-                        android:background="@drawable/left_border"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="@dimen/key_width"
-                            android:layout_height="@dimen/note_height"
-                            android:gravity="center_vertical"
-                            android:text=" 8" />
-
-                    </LinearLayout>
                 </LinearLayout>
 
             </HorizontalScrollView>
         </LinearLayout>
 
-        <ScrollView
-            android:id="@+id/scrollView"
+        <com.view.kimdata.NoteVerticalScrollView
+            android:id="@+id/noteVScrollView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/colorBackground"
@@ -852,23 +742,23 @@
 
                     </LinearLayout>
 
-                    <HorizontalScrollView
+                    <com.view.kimdata.NoteHorizontalScrollView
                         android:id="@+id/noteHScrollView"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent">
 
                         <LinearLayout
-                            android:id="@+id/noteVContainer"
+                            android:id="@+id/noteContainerLayout"
                             android:layout_width="wrap_content"
                             android:layout_height="match_parent"
-                            android:orientation="vertical">
+                            android:orientation="horizontal">
 
                         </LinearLayout>
 
-                    </HorizontalScrollView>
+                    </com.view.kimdata.NoteHorizontalScrollView>
 
                 </LinearLayout>
             </LinearLayout>
-        </ScrollView>
+        </com.view.kimdata.NoteVerticalScrollView>
     </LinearLayout>
 </FrameLayout>

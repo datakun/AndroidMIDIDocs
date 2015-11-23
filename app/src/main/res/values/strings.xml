@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">NoteEditor</string>
+    <string name="action_skip_previous">Skip Previous</string>
+    <string name="action_play_pause">Play/Pause</string>
+    <string name="action_repeat">Repeat</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_redo">Redo</string>
+    <string name="action_settings">Settings</string>
 </resources>

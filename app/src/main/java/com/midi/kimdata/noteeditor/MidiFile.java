@@ -11,11 +11,11 @@ public class MidiFile {
     //  represent with this code is one tick short of a
     //  two semibreves (i.e., 8 crotchets)
 
-    static final int SEMIQUAVER = 4;
-    static final int QUAVER = 8;
-    static final int CROTCHET = 16;
-    static final int MINIM = 32;
-    static final int SEMIBREVE = 64;
+    static final int SEMIQUAVER = 4; // 16분 음표
+    static final int QUAVER = 8; // 8분 음표
+    static final int CROTCHET = 16; // 4분 음표
+    static final int MINIM = 32; // 2분 음표
+    static final int SEMIBREVE = 64; // 온 음표
 
     // Standard MIDI file header, for one-track file
     // 4D, 54... are just magic numbers to identify the
@@ -93,7 +93,7 @@ public class MidiFile {
         int size = tempoEvent.length + keySigEvent.length + timeSigEvent.length
                 + footer.length;
 
-        for (int i = 0; i < playEvents.size() ;
+        for (int i = 0; i < playEvents.size();
              i++)
             size += playEvents.elementAt(i).length;
 
@@ -115,9 +115,8 @@ public class MidiFile {
         fos.write(intArrayToByteArray(timeSigEvent));
 
         // Write out the note, etc., events
-        for (int i = 0; i < playEvents.size() ;
-             i++)
-        {
+        for (int i = 0; i < playEvents.size();
+             i++) {
             fos.write(intArrayToByteArray(playEvents.elementAt(i)));
         }
 
@@ -134,9 +133,8 @@ public class MidiFile {
     protected static byte[] intArrayToByteArray(int[] ints) {
         int l = ints.length;
         byte[] out = new byte[ints.length];
-        for (int i = 0; i < l ;
-             i++)
-        {
+        for (int i = 0; i < l;
+             i++) {
             out[i] = (byte) ints[i];
         }
         return out;
@@ -195,20 +193,15 @@ public class MidiFile {
     public void noteSequenceFixedVelocity(int[] sequence, int velocity) {
         boolean lastWasRest = false;
         int restDelta = 0;
-        for (int i = 0; i < sequence.length ;
-             i += 2)
-        {
+        for (int i = 0; i < sequence.length; i += 2) {
             int note = sequence[i];
             int duration = sequence[i + 1];
-            if ( note <
-                    0)
-            {
+            if (note <
+                    0) {
                 // This is a rest
                 restDelta += duration;
                 lastWasRest = true;
-            }
-            else
-            {
+            } else {
                 // A note, not a rest
                 if (lastWasRest) {
                     noteOn(restDelta, note, velocity);

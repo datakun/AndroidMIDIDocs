@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:height="@dimen/note_height"
+        android:top="0dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackWhite" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="24dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackBlack" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="48dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackWhite" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="72dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackBlack" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="96dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackWhite" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="120dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackBlack" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="144dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackWhite" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="168dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackWhite" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="192dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackBlack" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="216dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackWhite" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="240dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackBlack" />
+        </shape>
+    </item>
+    <item
+        android:height="@dimen/note_height"
+        android:top="264dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBackWhite" />
+        </shape>
+    </item>
+    <item
+        android:height="1dp"
+        android:top="167dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBorderWhite" />
+        </shape>
+    </item>
+    <item
+        android:width="144dp"
+        android:height="1dp"
+        android:top="287dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBorderWhite" />
+        </shape>
+    </item>
+    <item
+        android:width="1dp"
+        android:height="287dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/colorBorderWhite" />
+        </shape>
+    </item>
+</layer-list>
