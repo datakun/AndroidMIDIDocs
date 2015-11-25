@@ -1,11 +1,11 @@
 package com.midi.kimdata.noteeditor;
 
-import android.graphics.Point;
-import android.graphics.Rect;
+import android.content.Context;
+import android.media.midi.MidiManager;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -70,6 +70,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     private int m_workNoteRight;
 
     private boolean m_isNoteMoved;
+
+    private int m_beforeY;
 
     public static void setFLRect(View view, int x, int y, int width, int height) {
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) view.getLayoutParams();
@@ -229,6 +231,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     }
 
     private void makeMIDIFile() {
+        MidiManager manager = (MidiManager) getSystemService(Context.MIDI_SERVICE);
+
         MidiFile mf = new MidiFile();
 
         // Test 1 — play a C major chord
@@ -306,7 +310,14 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     private View.OnTouchListener noteTouchListener = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
-            int sideArea = (int) getResources().getDimension(R.dimen.note_side_area);
+            int sideArea;
+
+            if (v.getWidth() / 4 >= (int) getResources().getDimension(R.dimen.note_side_area)) {
+                sideArea = v.getWidth() / 4;
+            } else {
+                sideArea = (int) getResources().getDimension(R.dimen.note_side_area);
+            }
+
             int midArea = v.getWidth() - (sideArea * 2);
 
             switch (event.getAction()) {
@@ -317,6 +328,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                         m_noteMode = NoteTouch.RIGHT;
                     } else {
                         m_noteMode = NoteTouch.MID;
+
+                        TOUCH_OFFSET = ((v.getWidth() / 2) / getDPI(NOTE_DP, m_metric)) * getDPI(NOTE_DP, m_metric);
                     }
 
                     m_workNote = (TextView) v;
@@ -362,6 +375,12 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     m_workNote = tv;
 
                     m_isNoteMoved = true;
+
+                    m_beforeY = y;
+
+                    Log.i("junu", "note created");
+
+                    // TODO: play sound
                 }
 
                 m_isOnWork = true;
@@ -371,70 +390,81 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 return true;
             case MotionEvent.ACTION_MOVE:
-                // TODO: 이동이나 사이즈 변경 중, 다른 노트와 충돌 시 처리 방법
+                // TODO: On move or edit size, calculate a collision.
                 if ((m_isOnWork && m_noteMode == NoteTouch.NONE) || m_noteMode == NoteTouch.MID) {
-//                    int barSize = getDPI(NOTE_DP, m_metric) * 4;
-//                    int targetBar = x <= 0 ? 0 : x / barSize;
-//
-//                    for (View item : m_noteViewList.get(targetBar)) {
-//                        if ((int) item.getX() == x && (int) item.getY() == y)
-//                            return true;
-//                    }
-
-                    if (isCollisionNote(m_workNote))
-                        return true;
-
                     m_workNote.setX(x);
                     m_workNote.setY(y);
                 } else if (m_noteMode == NoteTouch.LEFT) {
-                    if (m_workNoteRight - x == 0)
+                    if (m_workNoteRight - x <= 0)
                         return true;
 
-                    if (isCollisionNote(m_workNote))
+                    if (isCollisionLeftNote(m_workNote))
                         return true;
 
                     setFLRect(m_workNote, x, (int) m_workNote.getY(), m_workNoteRight - x, getDPI(NOTE_HEIGHT_DP, m_metric));
                 } else if (m_noteMode == NoteTouch.RIGHT) {
-                    if ((int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric) == 0)
+                    if ((int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric) <= 0)
                         return true;
 
-                    if (isCollisionNote(m_workNote))
+                    if (isCollisionRightNote(m_workNote))
                         return true;
 
                     setFLRect(m_workNote, (int) m_workNote.getX(), (int) m_workNote.getY(), (int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric), getDPI(NOTE_HEIGHT_DP, m_metric));
+                }
+
+                if (m_beforeY != y) {
+                    m_beforeY = y;
+
+                    // TODO: play sound
                 }
 
                 m_isNoteMoved = true;
 
                 return true;
             case MotionEvent.ACTION_UP:
+                int barSize = getDPI(NOTE_DP, m_metric) * 4;
+                int targetBar = x <= 0 ? 0 : x / barSize;
+
+                ArrayList<TextView> targetViewList = m_noteViewList.get(targetBar);
+
+                // Created note and moved.
                 if (m_noteMode == NoteTouch.NONE) {
                     ViewManager parent = (ViewManager) m_workNote.getParent();
 
-                    int barSize = getDPI(NOTE_DP, m_metric) * 4;
-                    int targetBar = x <= 0 ? 0 : x / barSize;
-
-                    // 영역을 벗어나서 노트를 제거, 이미 같은 위치에 노트가 있을 때 제거
+                    // Out of screen or note on same position, remove.
                     if (x < 0 || x >= m_noteContainer.getWidth()) {
                         parent.removeView(m_workNote);
+                        targetViewList.remove(m_workNote);
+
+                        Log.i("junu", "note delete out");
                     } else if (y < 0 || y >= m_noteContainer.getHeight()) {
                         parent.removeView(m_workNote);
+                        targetViewList.remove(m_workNote);
+
+                        Log.i("junu", "note delete out2");
                     } else if (isExistSamePosition(m_workNote, targetBar)) {
                         parent.removeView(m_workNote);
-                    } else {
-                        ArrayList<TextView> viewList = m_noteViewList.get(targetBar);
-                        viewList.add(m_workNote);
+                        targetViewList.remove(m_workNote);
 
-                        Collections.sort(viewList, noteViewComparator);
+                        Log.i("junu", "note delete same");
+                    } else {
+                        targetViewList.add(m_workNote);
                     }
                 }
 
+                // Not moved, just touch middle of note. Remove.
                 if (m_noteMode == NoteTouch.MID && !m_isNoteMoved) {
                     ViewManager parent = (ViewManager) m_workNote.getParent();
 
                     parent.removeView(m_workNote);
+                    targetViewList.remove(m_workNote);
+
+                    Log.i("junu", "note delete touch");
                 }
 
+                Collections.sort(targetViewList, noteViewComparator);
+
+                // Initialize.
                 m_workNote = null;
 
                 m_isOnWork = false;
@@ -442,8 +472,13 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 m_noteMode = NoteTouch.NONE;
 
+                TOUCH_OFFSET = 0;
+
                 m_noteHScrollView.setLockScroll(false);
                 m_noteVScrollView.setLockScroll(false);
+
+                for (ArrayList<TextView> itemList : m_noteViewList)
+                    Log.i("junu", "list size: " + itemList.size());
 
                 return true;
         }
@@ -460,24 +495,27 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         return false;
     }
 
-    private boolean isCollisionNote(View v) {
-        Rect noteRect = new Rect(v.getLeft(), v.getTop(), v.getRight(), v.getBottom());
-        ArrayList<Integer> targetBarList = new ArrayList<>();
-        int barSize = getDPI(NOTE_DP, m_metric) * 4;
+    private boolean isCollisionLeftNote(View v) {
+        for (ArrayList<TextView> itemList : m_noteViewList) {
+            for (View item : itemList) {
+                if ((int) item.getY() != (int) v.getY() || (int) item.getX() >= (int) v.getX() || item == v)
+                    continue;
 
-        for (int i = 0; i < BAR; i++) {
-            if (v.getLeft() <= barSize * i && barSize * i <= v.getRight()) {
-                targetBarList.add(i);
+                if ((int) item.getX() + item.getWidth() >= v.getX())
+                    return true;
             }
         }
 
-        for (int bar : targetBarList) {
-            for (View item : m_noteViewList.get(bar)) {
-                if (item == v)
+        return false;
+    }
+
+    private boolean isCollisionRightNote(View v) {
+        for (ArrayList<TextView> itemList : m_noteViewList) {
+            for (View item : itemList) {
+                if ((int) item.getY() != (int) v.getY() || (int) item.getX() + item.getWidth() <= (int) v.getX() || item == v)
                     continue;
 
-                Rect targetRect = new Rect(item.getLeft(), item.getTop(), item.getRight(), item.getBottom());
-                if (noteRect.contains(targetRect))
+                if ((int) item.getX() <= v.getX() + v.getWidth())
                     return true;
             }
         }

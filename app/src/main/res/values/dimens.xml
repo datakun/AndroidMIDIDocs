@@ -5,5 +5,5 @@
     <dimen name="note_height">24dp</dimen>
     <dimen name="note_width">36dp</dimen>
     <dimen name="key_width">72dp</dimen>
-    <dimen name="note_side_area">8dp</dimen>
+    <dimen name="note_side_area">9dp</dimen>
 </resources>
