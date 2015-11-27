@@ -328,10 +328,13 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 case MotionEvent.ACTION_DOWN:
                     if (event.getX() <= sideArea) {
                         m_noteMode = NoteTouch.LEFT;
+                        m_isNoteMoved = true;
                     } else if (event.getX() >= v.getWidth() - sideArea) {
                         m_noteMode = NoteTouch.RIGHT;
+                        m_isNoteMoved = true;
                     } else {
                         m_noteMode = NoteTouch.MID;
+                        m_isNoteMoved = false;
 
                         TOUCH_OFFSET = ((v.getWidth() / 2) / getDPI(NOTE_DP, m_metric)) * getDPI(NOTE_DP, m_metric);
                     }
@@ -339,8 +342,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     m_workNote = (TextView) v;
 
                     m_workNoteRight = (int) (v.getX() + v.getWidth());
-
-                    m_isNoteMoved = false;
 
                     break;
                 case MotionEvent.ACTION_MOVE:
@@ -380,8 +381,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                     m_workNote = tv;
 
-                    m_isNoteMoved = true;
-
                     m_beforeY = y;
 
                     Log.i("junu", "note created");
@@ -398,37 +397,16 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
             case MotionEvent.ACTION_MOVE:
                 // TODO: On move or edit size, calculate a collision.
                 if ((m_isOnWork && m_noteMode == NoteTouch.NONE) || m_noteMode == NoteTouch.MID) {
-
-//                    if (m_noteMode == NoteTouch.MID) {
-//                        if (isCollisionLeftNote(m_workNote)) {
-//                            m_isNoteMoved = true;
-//
-//                            return true;
-//                        }
-//
-//                        if (isCollisionRightNote(m_workNote)) {
-//                            m_isNoteMoved = true;
-//
-//                            return true;
-//                        }
-//                    }
-
                     m_workNote.setX(x);
                     m_workNote.setY(y);
                 } else if (m_noteMode == NoteTouch.LEFT) {
                     if (m_workNoteRight - x <= 0)
                         return true;
 
-//                    if (isCollisionLeftNote(m_workNote))
-//                        return true;
-
                     setFLRect(m_workNote, x, (int) m_workNote.getY(), m_workNoteRight - x, getDPI(NOTE_HEIGHT_DP, m_metric));
                 } else if (m_noteMode == NoteTouch.RIGHT) {
                     if ((int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric) <= 0)
                         return true;
-
-//                    if (isCollisionRightNote(m_workNote))
-//                        return true;
 
                     setFLRect(m_workNote, (int) m_workNote.getX(), (int) m_workNote.getY(), (int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric), getDPI(NOTE_HEIGHT_DP, m_metric));
                 }
@@ -443,38 +421,21 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 return true;
             case MotionEvent.ACTION_UP:
-                int barSize = getDPI(NOTE_DP, m_metric) * 4;
-                int targetBar = x <= 0 ? 0 : x / barSize;
-
-                // TODO : noteviewlist
-//                ArrayList<TextView> targetViewList = m_noteViewList.get(targetBar);
-
                 // Created note and moved.
                 if (m_noteMode == NoteTouch.NONE) {
                     ViewManager parent = (ViewManager) m_workNote.getParent();
 
-                    // Out of screen or note on same position, remove.
-                    if (x < 0 || x >= m_noteContainer.getWidth()) {
+                    // Note on same position, out of screen, remove.
+                    if (isExistSamePosition(m_workNote) ||
+                            x < 0 || x >= m_noteContainer.getWidth() ||
+                            y < 0 || y >= m_noteContainer.getHeight()) {
                         parent.removeView(m_workNote);
 
                         m_originalViewList.remove(m_workNote);
 
-                        Log.i("junu", "note delete out");
-                    } else if (y < 0 || y >= m_noteContainer.getHeight()) {
-                        parent.removeView(m_workNote);
+                        m_workNote = null;
 
-                        m_originalViewList.remove(m_workNote);
-
-                        Log.i("junu", "note delete out2");
-                    } else if (isExistSamePosition(m_workNote, targetBar)) {
-                        parent.removeView(m_workNote);
-
-                        m_originalViewList.remove(m_workNote);
-
-                        Log.i("junu", "note delete same");
-                    } else {
-                        // TODO : noteviewlist
-//                        targetViewList.add(m_workNote);
+                        Log.i("junu", "note deleted by place");
                     }
                 }
 
@@ -486,11 +447,24 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                     m_originalViewList.remove(m_workNote);
 
+                    m_workNote = null;
+
                     Log.i("junu", "note delete touch");
                 }
 
-                // TODO : noteviewlist
-//                Collections.sort(targetViewList, noteViewComparator);
+                if (m_noteMode != NoteTouch.NONE && m_workNote != null) {
+                    // Out of screen, replace.
+                    if (m_workNote.getX() < 0)
+                        m_workNote.setX(0);
+                    else if ((int) m_workNote.getX() + m_workNote.getWidth() > m_noteContainer.getWidth())
+                        m_workNote.setX(m_noteContainer.getWidth() - m_workNote.getWidth());
+
+                    if (m_workNote.getY() < 0)
+                        m_workNote.setY(0);
+                    else if ((int) m_workNote.getY() + m_workNote.getHeight() > m_noteContainer.getHeight())
+                        m_workNote.setY(m_noteContainer.getHeight() - m_workNote.getHeight());
+                }
+
                 Collections.sort(m_originalViewList, noteViewComparator);
 
                 // Initialize.
@@ -516,13 +490,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         return false;
     }
 
-    private boolean isExistSamePosition(View view, int targetBar) {
-        // TODO : noteviewlist
-//        for (View item : m_noteViewList.get(targetBar)) {
-//            if ((int) item.getX() == (int) view.getX() && (int) item.getY() == (int) view.getY())
-//                return true;
-//        }
-
+    private boolean isExistSamePosition(View view) {
         for (View item : m_originalViewList) {
             if (item != view &&
                     (int) item.getX() == (int) view.getX() &&
@@ -532,50 +500,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
         return false;
     }
-
-//    private boolean isCollisionLeftNote(View v) {
-//        // TODO : noteviewlist
-////        for (ArrayList<TextView> itemList : m_noteViewList) {
-////            for (View item : itemList) {
-////                if ((int) item.getY() != (int) v.getY() || (int) item.getX() >= (int) v.getX() || item == v)
-////                    continue;
-////
-////                if ((int) item.getX() + item.getWidth() >= v.getX())
-////                    return true;
-////            }
-////        }
-//        for (View item : m_originalViewList) {
-//            if (item != v &&
-//                    (int) item.getY() == (int) v.getY() &&
-//                    (int) item.getX() < (int) v.getX() &&
-//                    (int) item.getX() + item.getWidth() >= v.getX())
-//                return true;
-//        }
-//
-//        return false;
-//    }
-//
-//    private boolean isCollisionRightNote(View v) {
-//        // TODO : noteviewlist
-////        for (ArrayList<TextView> itemList : m_noteViewList) {
-////            for (View item : itemList) {
-////                if ((int) item.getY() != (int) v.getY() || (int) item.getX() + item.getWidth() <= (int) v.getX() || item == v)
-////                    continue;
-////
-////                if ((int) item.getX() <= v.getX() + v.getWidth())
-////                    return true;
-////            }
-////        }
-//        for (View item : m_originalViewList) {
-//            if (item != v &&
-//                    (int) item.getY() == (int) v.getY() &&
-//                    (int) item.getX() >= (int) v.getX() + v.getWidth() &&
-//                    (int) item.getX() <= (int) v.getX() + v.getWidth())
-//                return true;
-//        }
-//
-//        return false;
-//    }
 
     private final static Comparator<TextView> noteViewComparator = new Comparator<TextView>() {
         public int compare(TextView lhs, TextView rhs) {
