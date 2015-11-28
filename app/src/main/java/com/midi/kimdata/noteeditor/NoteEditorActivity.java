@@ -1,7 +1,5 @@
 package com.midi.kimdata.noteeditor;
 
-import android.content.Context;
-import android.media.midi.MidiManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -23,11 +21,16 @@ import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import com.leff.midi.MidiFile;
+import com.leff.midi.MidiTrack;
+import com.leff.midi.event.meta.Tempo;
+import com.leff.midi.event.meta.TimeSignature;
 import com.view.kimdata.NoteHorizontalScrollView;
 import com.view.kimdata.NoteVerticalScrollView;
+import com.view.kimdata.NoteView;
 
+import java.io.File;
 import java.io.IOException;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -43,9 +46,21 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     public static final int NOTE_DP = 36;
     public static final int NOTE_HEIGHT_DP = 24;
 
-    public enum NoteTouch {NONE, LEFT, MID, RIGHT}
+    public static final int PITCH_TOP = 119;
+    public static final int PITCH_BOTTOM = 36;
 
-    private Toolbar m_toolbar;
+    public static final int ON = 1;
+    public static final int OFF = 2;
+    public static final int PITCH = 3;
+    public static final int VELOCITY = 4;
+
+    public static final int SEMIQUAVER = 120;
+    public static final int QUAVER = 240;
+    public static final int CROTCHET = 480;
+    public static final int MINIM = 960;
+    public static final int SEMIBREVE = 1920;
+
+    public enum NoteTouch {NONE, LEFT, MID, RIGHT}
 
     private HorizontalScrollView m_rulerHScrollView;
     private NoteHorizontalScrollView m_noteHScrollView;
@@ -59,33 +74,26 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
     private Switch m_editSwitch;
 
-    private TextView m_workNote;
+    private NoteView m_workNote;
 
     private boolean m_isOnWork;
 
     private NoteTouch m_noteMode;
 
-    //    private ArrayList<ArrayList<TextView>> m_noteViewList;
-    private ArrayList<TextView> m_originalViewList;
+    private ArrayList<NoteView> m_originalViewList;
 
     private int m_workNoteRight;
 
     private boolean m_isNoteMoved;
 
+    private int m_beforeWidth;
     private int m_beforeY;
 
-    public static void setFLRect(View view, int x, int y, int width, int height) {
-        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) view.getLayoutParams();
-        params.width = width;
-        params.height = height;
-        view.setX(x);
-        view.setY(y);
-        view.setLayoutParams(params);
-    }
+    private int m_channel;
 
-    public static int getDPI(int size, DisplayMetrics metrics) {
-        return (size * metrics.densityDpi) / DisplayMetrics.DENSITY_DEFAULT;
-    }
+    private int m_tempo;
+    private int m_numerator;
+    private int m_denominators;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,13 +106,18 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         m_isOnWork = false;
         m_noteMode = NoteTouch.NONE;
         m_isNoteMoved = false;
+        m_beforeWidth = 0;
 
-//        TOUCH_OFFSET = getDPI(NOTE_DP, m_metric);
+        m_channel = 0;
 
-        m_toolbar = (Toolbar) findViewById(R.id.toolbar);
+        m_tempo = 100;
+        m_numerator = 4;
+        m_denominators = 4;
 
-        if (m_toolbar != null) {
-            setSupportActionBar(m_toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
+        if (toolbar != null) {
+            setSupportActionBar(toolbar);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
@@ -135,9 +148,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         m_noteContainer = new FrameLayout(this);
 
         m_noteContainer.setLayoutParams(new FrameLayout.LayoutParams((int) getResources().getDimension(R.dimen.note_width) * BAR * 4, FrameLayout.LayoutParams.MATCH_PARENT));
-//        m_noteContainer.setBackgroundColor(getColor(R.color.colorBackBlack));
-//        m_noteContainer.setBackground(getDrawable(R.drawable.stripe_pattern));
-//        m_noteContainer.setBackgroundResource(R.drawable.stripe_pattern);
 
         m_noteContainer.setOnTouchListener(this);
 
@@ -146,8 +156,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
         m_rulerContainer = (LinearLayout) findViewById(R.id.rulerContainer);
 
-        // TODO : noteviewlist
-//        m_noteViewList = new ArrayList<>();
         m_originalViewList = new ArrayList<>();
 
         for (int i = 0; i < BAR; i++) {
@@ -159,23 +167,24 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 m_noteContainer.addView(iv);
 
                 int octaveHeight = getDPI(NOTE_HEIGHT_DP, m_metric) * 12;
-//            setFLRect(iv, 0, i * octaveHeight, FrameLayout.LayoutParams.MATCH_PARENT, octaveHeight);
                 setFLRect(iv, i * getDPI(NOTE_DP * 4, m_metric), j * octaveHeight, getDPI(NOTE_DP * 4, m_metric), octaveHeight);
             }
-
-            ArrayList<TextView> noteListInBar = new ArrayList<>();
-            // TODO : noteviewlist
-//            m_noteViewList.add(noteListInBar);
         }
 
         // set scroll
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             public void run() {
-                // octave = 12, 3 octave + 1 key
-                m_noteVScrollView.setScrollY(getDPI(NOTE_HEIGHT_DP, m_metric) * 37);
+                // octave = 12, 4 octave + 1 key
+                int moveOctave = 12 * 4 + 1;
+                m_noteVScrollView.setScrollY(getDPI(NOTE_HEIGHT_DP, m_metric) * moveOctave);
             }
         }, 500);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     @Override
@@ -188,8 +197,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.i("junu", "" + (item.getItemId() == R.id.action_settings));
-
         switch (item.getItemId()) {
             case R.id.action_skip_previous:
 
@@ -235,62 +242,68 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     }
 
     private void makeMIDIFile() {
-        MidiManager manager = (MidiManager) getSystemService(Context.MIDI_SERVICE);
+        MidiTrack tempoTrack = new MidiTrack();
+        MidiTrack noteTrack = new MidiTrack();
 
-        MidiFile mf = new MidiFile();
+        TimeSignature ts = new TimeSignature();
+        ts.setTimeSignature(m_numerator, m_denominators, TimeSignature.DEFAULT_METER, TimeSignature.DEFAULT_DIVISION);
 
-        // Test 1 — play a C major chord
+        Tempo tempo = new Tempo();
+        tempo.setBpm(m_tempo);
 
-        // Turn on all three notes at start-of-track (delta=0)
-        mf.noteOn(0, 60, 127);
-        mf.noteOn(0, 64, 127);
-        mf.noteOn(0, 67, 127);
+        tempoTrack.insertEvent(ts);
+        tempoTrack.insertEvent(tempo);
 
-        // Turn off all three notes after one minim.
-        // NOTE delta value is cumulative — only _one_ of
-        //  these note-offs has a non-zero delta. The second and
-        //  third events are relative to the first
-        mf.noteOff(MidiFile.MINIM, 60);
-        mf.noteOff(0, 64);
-        mf.noteOff(0, 67);
-
-        // Test 2 — play a scale using noteOnOffNow
-        //  We don't need any delta values here, so long as one
-        //  note comes straight after the previous one
-
-        mf.noteOnOffNow(MidiFile.CROTCHET, 60, 127);
-        mf.noteOnOffNow(MidiFile.QUAVER, 62, 127);
-        mf.noteOnOffNow(MidiFile.CROTCHET, 64, 127);
-        mf.noteOnOffNow(MidiFile.QUAVER, 65, 127);
-        mf.noteOnOffNow(MidiFile.CROTCHET, 67, 127);
-        mf.noteOnOffNow(MidiFile.QUAVER, 69, 127);
-        mf.noteOnOffNow(MidiFile.CROTCHET, 71, 127);
-        mf.noteOnOffNow(MidiFile.QUAVER, 72, 127);
-
-        // Test 3 — play a short tune using noteSequenceFixedVelocity
-        //  Note the rest inserted with a note value of -1
-
-        int[] sequence = new int[]
-                {
-                        60, MidiFile.QUAVER,
-                        -1, MidiFile.CROTCHET,
-                        62, MidiFile.QUAVER,
-                        -1, MidiFile.CROTCHET,
-                        64, MidiFile.QUAVER,
-                };
-
-        // What the heck — use a different instrument for a change
-//        mf.progChange(10);
-
-        mf.noteSequenceFixedVelocity(sequence, 127);
-
-        String dirPath = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).getPath();
-
-        try {
-            mf.writeToFile(dirPath + "/test1.mid");
-        } catch (IOException e) {
-            e.printStackTrace();
+        for (NoteView view : m_originalViewList) {
+            noteTrack.insertNote(m_channel, view.getPitch(), view.getVelocity(), view.getTick(), view.getDuration());
         }
+
+        ArrayList<MidiTrack> tracks = new ArrayList<>();
+        tracks.add(tempoTrack);
+        tracks.add(noteTrack);
+
+        if (isExternalStorageWritable()) {
+            MidiFile midi = new MidiFile(MidiFile.DEFAULT_RESOLUTION, tracks);
+
+            String dirPath = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).getPath();
+            File output = new File(dirPath + "/exampleout.mid");
+
+            try {
+                midi.writeToFile(output);
+            } catch (IOException e) {
+                System.err.println(e);
+            }
+        }
+    }
+
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static void setFLRect(View view, int x, int y, int width, int height) {
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) view.getLayoutParams();
+        params.width = width;
+        params.height = height;
+        view.setX(x);
+        view.setY(y);
+        view.setLayoutParams(params);
+    }
+
+    public static int getDPI(int size, DisplayMetrics metrics) {
+        return (size * metrics.densityDpi) / DisplayMetrics.DENSITY_DEFAULT;
     }
 
     private View.OnScrollChangeListener noteScrollListener = new View.OnScrollChangeListener() {
@@ -322,8 +335,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 sideArea = (int) getResources().getDimension(R.dimen.note_side_area);
             }
 
-            int midArea = v.getWidth() - (sideArea * 2);
-
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     if (event.getX() <= sideArea) {
@@ -339,7 +350,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                         TOUCH_OFFSET = ((v.getWidth() / 2) / getDPI(NOTE_DP, m_metric)) * getDPI(NOTE_DP, m_metric);
                     }
 
-                    m_workNote = (TextView) v;
+                    m_workNote = (NoteView) v;
 
                     m_workNoteRight = (int) (v.getX() + v.getWidth());
 
@@ -348,7 +359,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                     break;
                 case MotionEvent.ACTION_UP:
-                    Log.i("junu", "delete");
 
                     break;
             }
@@ -368,22 +378,27 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (m_noteMode == NoteTouch.NONE) {
-                    TextView tv = new TextView(this);
-                    m_noteContainer.addView(tv);
-                    tv.setBackgroundResource(R.drawable.note);
+                    NoteView noteView = new NoteView(this);
+                    m_noteContainer.addView(noteView);
+                    noteView.setBackgroundResource(R.drawable.note);
+                    noteView.setVelocity(127);
+
 //                tv.setBackgroundColor(getColor(R.color.colorPrimary));
 
-                    tv.setOnTouchListener(noteTouchListener);
+                    noteView.setOnTouchListener(noteTouchListener);
 
-                    setFLRect(tv, x, y, getDPI(NOTE_DP, m_metric), getDPI(NOTE_HEIGHT_DP, m_metric));
+                    int noteWidth = m_beforeWidth;
 
-                    m_originalViewList.add(tv);
+                    if (noteWidth == 0)
+                        noteWidth = getDPI(NOTE_DP, m_metric);
 
-                    m_workNote = tv;
+                    setFLRect(noteView, x, y, noteWidth, getDPI(NOTE_HEIGHT_DP, m_metric));
+
+                    m_originalViewList.add(noteView);
+
+                    m_workNote = noteView;
 
                     m_beforeY = y;
-
-                    Log.i("junu", "note created");
 
                     // TODO: play sound
                 }
@@ -395,7 +410,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 return true;
             case MotionEvent.ACTION_MOVE:
-                // TODO: On move or edit size, calculate a collision.
                 if ((m_isOnWork && m_noteMode == NoteTouch.NONE) || m_noteMode == NoteTouch.MID) {
                     m_workNote.setX(x);
                     m_workNote.setY(y);
@@ -421,6 +435,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 return true;
             case MotionEvent.ACTION_UP:
+                m_beforeWidth = m_workNote.getWidth();
+
                 // Created note and moved.
                 if (m_noteMode == NoteTouch.NONE) {
                     ViewManager parent = (ViewManager) m_workNote.getParent();
@@ -434,35 +450,51 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                         m_originalViewList.remove(m_workNote);
 
                         m_workNote = null;
-
-                        Log.i("junu", "note deleted by place");
                     }
                 }
 
-                // Not moved, just touch middle of note. Remove.
-                if (m_noteMode == NoteTouch.MID && !m_isNoteMoved) {
-                    ViewManager parent = (ViewManager) m_workNote.getParent();
+                try {
+                    // Not moved, just touch middle of note. Remove.
+                    if (m_noteMode == NoteTouch.MID && !m_isNoteMoved) {
+                        ViewManager parent = (ViewManager) m_workNote.getParent();
 
-                    parent.removeView(m_workNote);
+                        parent.removeView(m_workNote);
 
-                    m_originalViewList.remove(m_workNote);
+                        m_originalViewList.remove(m_workNote);
 
-                    m_workNote = null;
-
-                    Log.i("junu", "note delete touch");
+                        m_workNote = null;
+                    }
+                } catch (NullPointerException e) {
+                    Log.i("junu", "null in check touch mid");
                 }
 
-                if (m_noteMode != NoteTouch.NONE && m_workNote != null) {
-                    // Out of screen, replace.
-                    if (m_workNote.getX() < 0)
-                        m_workNote.setX(0);
-                    else if ((int) m_workNote.getX() + m_workNote.getWidth() > m_noteContainer.getWidth())
-                        m_workNote.setX(m_noteContainer.getWidth() - m_workNote.getWidth());
+                try {
+                    if (m_noteMode != NoteTouch.NONE && m_workNote != null) {
+                        // Out of screen, replace.
+                        if (m_workNote.getX() < 0)
+                            m_workNote.setX(0);
+                        else if ((int) m_workNote.getX() + m_workNote.getWidth() > m_noteContainer.getWidth())
+                            m_workNote.setX(m_noteContainer.getWidth() - m_workNote.getWidth());
 
-                    if (m_workNote.getY() < 0)
-                        m_workNote.setY(0);
-                    else if ((int) m_workNote.getY() + m_workNote.getHeight() > m_noteContainer.getHeight())
-                        m_workNote.setY(m_noteContainer.getHeight() - m_workNote.getHeight());
+                        if (m_workNote.getY() < 0)
+                            m_workNote.setY(0);
+                        else if ((int) m_workNote.getY() + m_workNote.getHeight() > m_noteContainer.getHeight())
+                            m_workNote.setY(m_noteContainer.getHeight() - m_workNote.getHeight());
+                    }
+                } catch (NullPointerException e) {
+                    Log.i("junu", "null in replace");
+                }
+
+                // Calculate pitch, on, off
+                if (m_workNote != null) {
+                    int pitch = PITCH_TOP - ((int) m_workNote.getY() / getDPI(NOTE_HEIGHT_DP, m_metric));
+
+                    m_workNote.setPitch(pitch);
+                    // TODO : ON, OFF
+                    m_workNote.setTick((int) m_workNote.getX() / getDPI(NOTE_DP, m_metric) * CROTCHET);
+                    m_workNote.setDuration(m_workNote.getWidth() / getDPI(NOTE_DP, m_metric) * CROTCHET);
+//                    m_workNote.setOn((int) m_workNote.getX() / getDPI(NOTE_DP, m_metric) * MidiFile.CROTCHET);
+//                    m_workNote.setOff((int) (m_workNote.getX() + m_workNote.getWidth()) / getDPI(NOTE_DP, m_metric) * MidiFile.CROTCHET);
                 }
 
                 Collections.sort(m_originalViewList, noteViewComparator);
@@ -479,10 +511,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 m_noteHScrollView.setLockScroll(false);
                 m_noteVScrollView.setLockScroll(false);
-
-                Log.i("junu", "view list : " + m_originalViewList.size());
-                for (View view : m_originalViewList)
-                    Log.i("junu", view.getX() + ", " + view.getY());
 
                 return true;
         }
@@ -501,8 +529,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         return false;
     }
 
-    private final static Comparator<TextView> noteViewComparator = new Comparator<TextView>() {
-        public int compare(TextView lhs, TextView rhs) {
+    private final static Comparator<NoteView> noteViewComparator = new Comparator<NoteView>() {
+        public int compare(NoteView lhs, NoteView rhs) {
             if ((int) lhs.getX() == (int) rhs.getX())
                 return (int) lhs.getY() - (int) rhs.getY();
             else

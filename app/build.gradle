@@ -28,3 +28,17 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.1.1'
 }
+
+repositories {
+    maven {
+        url 'https://github.com/kshoji/USB-MIDI-Driver/raw/master/MIDIDriver/snapshots'
+        // if you need the latest library, uncomment the line below and comment the line above.
+        // url 'https://github.com/kshoji/USB-MIDI-Driver/raw/develop/MIDIDriver/snapshots'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    // if you need the latest library, specify `0.0.4-SNAPSHOT` instead of `0.0.3`
+    compile 'jp.kshoji:midi-driver:0.0.3:@aar'
+}
