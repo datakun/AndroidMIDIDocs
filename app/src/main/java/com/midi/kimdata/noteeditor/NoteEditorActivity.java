@@ -86,14 +86,18 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
     private boolean m_isNoteMoved;
 
-    private int m_beforeWidth;
-    private int m_beforeY;
+    private int m_beforeWidth; // To create note.
+    private int m_beforeY; // Pitch to play sound.
+    private int m_beforeX;
+
+    private boolean m_isHoldNote; // To change note width.
+    private boolean m_isEditDuration;
 
     private int m_channel;
 
     private int m_tempo;
-    private int m_numerator;
-    private int m_denominators;
+    private int m_numerator; // For Time Signature
+    private int m_denominators; // For Time Signature
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,7 +110,13 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         m_isOnWork = false;
         m_noteMode = NoteTouch.NONE;
         m_isNoteMoved = false;
+
         m_beforeWidth = 0;
+        m_beforeY = 0;
+        m_beforeX = 0;
+
+        m_isHoldNote = false;
+        m_isEditDuration = false;
 
         m_channel = 0;
 
@@ -354,8 +364,23 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                     m_workNoteRight = (int) (v.getX() + v.getWidth());
 
+                    m_isHoldNote = true;
+                    m_isEditDuration = false;
+
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        public void run() {
+                            if (m_isHoldNote)
+                                m_isEditDuration = true;
+
+                            if (m_workNote != null && m_isEditDuration)
+                                m_workNote.setBackgroundResource(R.drawable.note_hold);
+                        }
+                    }, 1000);
+
                     break;
                 case MotionEvent.ACTION_MOVE:
+                    Log.i("junu", "move out");
 
                     break;
                 case MotionEvent.ACTION_UP:
@@ -399,6 +424,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     m_workNote = noteView;
 
                     m_beforeY = y;
+                    m_beforeX = x;
 
                     // TODO: play sound
                 }
@@ -410,7 +436,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 return true;
             case MotionEvent.ACTION_MOVE:
-                if ((m_isOnWork && m_noteMode == NoteTouch.NONE) || m_noteMode == NoteTouch.MID) {
+                Log.i("junu", "moved base");
+                if ((m_isOnWork && m_noteMode == NoteTouch.NONE) || (m_noteMode == NoteTouch.MID && !m_isEditDuration)) {
                     m_workNote.setX(x);
                     m_workNote.setY(y);
                 } else if (m_noteMode == NoteTouch.LEFT) {
@@ -425,10 +452,24 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     setFLRect(m_workNote, (int) m_workNote.getX(), (int) m_workNote.getY(), (int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric), getDPI(NOTE_HEIGHT_DP, m_metric));
                 }
 
+                if (m_isEditDuration && m_workNote.getX() + (m_workNote.getWidth() / 2) > event.getX()) {
+                    setFLRect(m_workNote, x, (int) m_workNote.getY(), m_workNoteRight - x + TOUCH_OFFSET, getDPI(NOTE_HEIGHT_DP, m_metric));
+                } else if (m_isEditDuration && m_workNote.getX() + (m_workNote.getWidth() / 2) < event.getX()) {
+                    setFLRect(m_workNote, (int) m_workNote.getX(), (int) m_workNote.getY(), (int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric) + TOUCH_OFFSET, getDPI(NOTE_HEIGHT_DP, m_metric));
+                }
+
                 if (m_beforeY != y) {
                     m_beforeY = y;
 
+                    m_isHoldNote = false;
+
                     // TODO: play sound
+                }
+
+                if (Math.abs(m_beforeX - x) > getDPI(NOTE_DP / 2, m_metric)) {
+                    m_beforeX = x;
+
+                    m_isHoldNote = false;
                 }
 
                 m_isNoteMoved = true;
@@ -455,7 +496,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 try {
                     // Not moved, just touch middle of note. Remove.
-                    if (m_noteMode == NoteTouch.MID && !m_isNoteMoved) {
+                    if (m_noteMode == NoteTouch.MID && !m_isNoteMoved && !m_isEditDuration) {
                         ViewManager parent = (ViewManager) m_workNote.getParent();
 
                         parent.removeView(m_workNote);
@@ -485,6 +526,9 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     Log.i("junu", "null in replace");
                 }
 
+                if (m_workNote != null)
+                    m_workNote.setBackgroundResource(R.drawable.note);
+
                 // Calculate pitch, on, off
                 if (m_workNote != null) {
                     int pitch = PITCH_TOP - ((int) m_workNote.getY() / getDPI(NOTE_HEIGHT_DP, m_metric));
@@ -508,6 +552,9 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 m_noteMode = NoteTouch.NONE;
 
                 TOUCH_OFFSET = 0;
+
+                m_isHoldNote = false;
+                m_isEditDuration = false;
 
                 m_noteHScrollView.setLockScroll(false);
                 m_noteVScrollView.setLockScroll(false);
