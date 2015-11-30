@@ -1,5 +1,6 @@
 package com.midi.kimdata.noteeditor;
 
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -20,6 +21,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.leff.midi.MidiFile;
 import com.leff.midi.MidiTrack;
@@ -30,6 +32,7 @@ import com.view.kimdata.NoteVerticalScrollView;
 import com.view.kimdata.NoteView;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -99,6 +102,9 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     private int m_numerator; // For Time Signature
     private int m_denominators; // For Time Signature
 
+    private MediaPlayer m_player;
+    private String m_tempSoundFile;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,6 +129,9 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         m_tempo = 100;
         m_numerator = 4;
         m_denominators = 4;
+
+        m_player = new MediaPlayer();
+        m_tempSoundFile = "playing.mid";
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 
@@ -212,6 +221,15 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 return true;
             case R.id.action_play_pause:
+                makeMIDIFile("/playing.mid");
+
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+
+                        playSound();
+                    }
+                }, 1000);
 
                 return true;
             case R.id.action_repeat:
@@ -224,7 +242,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 return true;
             case R.id.action_settings:
-                makeMIDIFile();
+                makeMIDIFile("/exampleout.mid");
 
                 return true;
             default:
@@ -251,7 +269,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         m_rulerContainer.addView(container);
     }
 
-    private void makeMIDIFile() {
+    private void makeMIDIFile(String filename) {
         MidiTrack tempoTrack = new MidiTrack();
         MidiTrack noteTrack = new MidiTrack();
 
@@ -276,13 +294,30 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
             MidiFile midi = new MidiFile(MidiFile.DEFAULT_RESOLUTION, tracks);
 
             String dirPath = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).getPath();
-            File output = new File(dirPath + "/exampleout.mid");
+            m_tempSoundFile = dirPath + filename;
+            File output = new File(m_tempSoundFile);
 
             try {
                 midi.writeToFile(output);
             } catch (IOException e) {
                 System.err.println(e);
             }
+        }
+    }
+
+    public void playSound() {
+        try {
+            File midiFile = new File(m_tempSoundFile);
+            FileInputStream input = new FileInputStream(midiFile);
+            m_player.reset();
+            m_player.setDataSource(input.getFD());
+            input.close();
+            m_player.prepare();
+            m_player.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast toast = Toast.makeText(this, "Error: Unable to play MIDI sound", Toast.LENGTH_LONG);
+            toast.show();
         }
     }
 
