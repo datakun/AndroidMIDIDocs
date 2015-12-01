@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!--<item-->
+        <!--android:id="@+id/action_skip_previous"-->
+        <!--android:icon="@mipmap/ic_skip_previous_white_48dp"-->
+        <!--android:orderInCategory="1"-->
+        <!--android:title="@string/action_skip_previous"-->
+        <!--app:showAsAction="always" />-->
     <item
-        android:id="@+id/action_skip_previous"
-        android:icon="@mipmap/ic_skip_previous_white_48dp"
-        android:orderInCategory="1"
-        android:title="@string/action_skip_previous"
-        app:showAsAction="always" />
-    <item
-        android:id="@+id/action_play_pause"
+        android:id="@+id/action_play_stop"
         android:icon="@mipmap/ic_play_arrow_white_48dp"
         android:orderInCategory="2"
         android:title="@string/action_play_pause"

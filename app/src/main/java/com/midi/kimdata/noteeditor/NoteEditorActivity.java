@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,7 +22,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.leff.midi.MidiFile;
 import com.leff.midi.MidiTrack;
@@ -79,6 +79,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
     private NoteView m_workNote;
 
+    private Menu m_actionbarMenu;
+
     private boolean m_isOnWork;
 
     private NoteTouch m_noteMode;
@@ -104,6 +106,12 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
     private MediaPlayer m_player;
     private String m_tempSoundFile;
+
+    private View m_timelineIndicator;
+    private Handler m_indicatorTimer;
+
+    private boolean m_isPlaying;
+    private boolean m_beforeSwitchState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,7 +139,24 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         m_denominators = 4;
 
         m_player = new MediaPlayer();
+        m_player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                m_isPlaying = false;
+
+                m_indicatorTimer.postDelayed(null, 0);
+
+                MenuItem playMenu = m_actionbarMenu.findItem(R.id.action_play_stop);
+                playMenu.setIcon(R.mipmap.ic_play_arrow_white_48dp);
+
+                m_editSwitch.setChecked(m_beforeSwitchState);
+            }
+        });
         m_tempSoundFile = "playing.mid";
+
+        m_isPlaying = false;
+
+        m_indicatorTimer = new Handler();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 
@@ -190,6 +215,20 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
             }
         }
 
+        FrameLayout _wholeContainer = (FrameLayout) findViewById(R.id.wholeContainer);
+
+        m_timelineIndicator = new View(this);
+        m_timelineIndicator.setBackgroundColor(getColor(R.color.colorOpacityWhite));
+
+//        _wholeContainer.addView(m_timelineIndicator);
+        m_noteContainer.addView(m_timelineIndicator);
+
+        TypedValue tv = new TypedValue();
+        getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true);
+        int actionBarHeight = getResources().getDimensionPixelSize(tv.resourceId);
+
+        setFLRect(m_timelineIndicator, 0 - getDPI(NOTE_DP, m_metric), actionBarHeight, getDPI(NOTE_DP, m_metric), getDPI(NOTE_HEIGHT_DP * KEY_RANGE, m_metric));
+
         // set scroll
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
@@ -199,6 +238,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 m_noteVScrollView.setScrollY(getDPI(NOTE_HEIGHT_DP, m_metric) * moveOctave);
             }
         }, 500);
+
+        m_beforeSwitchState = m_editSwitch.isChecked();
     }
 
     @Override
@@ -211,23 +252,22 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.editor_menu, menu);
 
+        m_actionbarMenu = menu;
+
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_skip_previous:
-
-                return true;
-            case R.id.action_play_pause:
-                makeMIDIFile("/playing.mid");
+            case R.id.action_play_stop:
+                if (!m_isPlaying)
+                    makeMIDIFile("/playing.mid");
 
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     public void run() {
-
-                        playSound();
+                        playStopSound();
                     }
                 }, 1000);
 
@@ -305,19 +345,56 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         }
     }
 
-    public void playSound() {
-        try {
-            File midiFile = new File(m_tempSoundFile);
-            FileInputStream input = new FileInputStream(midiFile);
-            m_player.reset();
-            m_player.setDataSource(input.getFD());
-            input.close();
-            m_player.prepare();
-            m_player.start();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast toast = Toast.makeText(this, "Error: Unable to play MIDI sound", Toast.LENGTH_LONG);
-            toast.show();
+    public void playStopSound() {
+        if (m_isPlaying) { // set stop
+            m_isPlaying = false;
+
+            m_player.stop();
+
+            m_timelineIndicator.setX(0 - getDPI(NOTE_DP, m_metric));
+
+            m_isPlaying = false;
+
+            m_indicatorTimer.postDelayed(null, 0);
+
+            MenuItem playMenu = m_actionbarMenu.findItem(R.id.action_play_stop);
+            playMenu.setIcon(R.mipmap.ic_play_arrow_white_48dp);
+
+            m_editSwitch.setChecked(m_beforeSwitchState);
+        } else { // play
+            try {
+                File midiFile = new File(m_tempSoundFile);
+                FileInputStream input = new FileInputStream(midiFile);
+                m_player.reset();
+                m_player.setDataSource(input.getFD());
+                input.close();
+                m_player.prepare();
+                m_player.start();
+
+                m_timelineIndicator.setX(0);
+
+                m_isPlaying = true;
+
+                m_indicatorTimer.postDelayed(new Runnable() {
+                    public void run() {
+                        if (m_isPlaying) {
+                            int x = (int) m_timelineIndicator.getX();
+                            m_timelineIndicator.setX(x + getDPI(NOTE_DP, m_metric));
+
+                            m_indicatorTimer.postDelayed(this, (long) (1000 / (m_tempo / 60.0)));
+                        }
+                    }
+                }, (long) (1000 / (m_tempo / 60.0)));
+
+                MenuItem playMenu = m_actionbarMenu.findItem(R.id.action_play_stop);
+                playMenu.setIcon(R.mipmap.ic_stop_white_48dp);
+
+                m_beforeSwitchState = m_editSwitch.isChecked();
+
+                m_editSwitch.setChecked(false);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -372,6 +449,9 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     private View.OnTouchListener noteTouchListener = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
+            if (!m_editSwitch.isChecked() || m_isPlaying)
+                return true;
+
             int sideArea;
 
             if (v.getWidth() / 4 >= (int) getResources().getDimension(R.dimen.note_side_area)) {
@@ -429,7 +509,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (!m_editSwitch.isChecked())
+        if (!m_editSwitch.isChecked() || m_isPlaying)
             return true;
 
         int x = (int) (event.getX() - (event.getX() % getDPI(NOTE_DP, m_metric))) - TOUCH_OFFSET;

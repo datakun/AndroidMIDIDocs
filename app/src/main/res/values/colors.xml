@@ -9,5 +9,6 @@
     <color name="colorBorder">#222222</color>
     <color name="colorBackground">#111111</color>
     <color name="colorBackWhite">#666666</color>
+    <color name="colorOpacityWhite">#33FFFFFF</color>
     <color name="colorBackBlack">#333333</color>
 </resources>
