@@ -86,10 +86,13 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     private NoteTouch m_noteMode;
 
     private ArrayList<NoteView> m_originalViewList;
+    private ArrayList<ArrayList<NoteView>> m_undoViewList;
+    private ArrayList<ArrayList<NoteView>> m_redoViewList;
 
     private int m_workNoteRight;
 
     private boolean m_isNoteMoved;
+    private boolean m_isNoteCreated;
 
     private int m_beforeWidth; // To create note.
     private int m_beforeY; // Pitch to play sound.
@@ -112,6 +115,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
     private boolean m_isPlaying;
     private boolean m_beforeSwitchState;
+    private boolean m_isRepeat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +128,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         m_isOnWork = false;
         m_noteMode = NoteTouch.NONE;
         m_isNoteMoved = false;
+        m_isNoteCreated = false;
 
         m_beforeWidth = 0;
         m_beforeY = 0;
@@ -150,11 +155,21 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 playMenu.setIcon(R.mipmap.ic_play_arrow_white_48dp);
 
                 m_editSwitch.setChecked(m_beforeSwitchState);
+
+                if (m_isRepeat) {
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        public void run() {
+                            playStopSound();
+                        }
+                    }, 1000);
+                }
             }
         });
         m_tempSoundFile = "playing.mid";
 
         m_isPlaying = false;
+        m_isRepeat = false;
 
         m_indicatorTimer = new Handler();
 
@@ -201,6 +216,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         m_rulerContainer = (LinearLayout) findViewById(R.id.rulerContainer);
 
         m_originalViewList = new ArrayList<>();
+        m_undoViewList = new ArrayList<>();
+        m_redoViewList = new ArrayList<>();
 
         for (int i = 0; i < BAR; i++) {
             addBar(i);
@@ -273,12 +290,57 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 return true;
             case R.id.action_repeat:
+                m_isRepeat = !m_isRepeat;
+
+                MenuItem repeatMenu = m_actionbarMenu.findItem(R.id.action_repeat);
+                if (m_isRepeat)
+                    repeatMenu.setIcon(R.mipmap.ic_repeat_white_48dp);
+                else
+                    repeatMenu.setIcon(R.mipmap.ic_repeat_black_48dp);
 
                 return true;
             case R.id.action_undo:
+                if (m_undoViewList.size() > 0) {
+                    ArrayList<NoteView> redoList = new ArrayList<>();
+                    redoList.addAll(m_originalViewList);
+                    m_redoViewList.add(redoList);
+
+                    Log.i("junu", "undo : " + m_originalViewList.size());
+
+                    for (NoteView view : m_originalViewList)
+                        m_noteContainer.removeView(view);
+
+                    m_originalViewList.clear();
+                    ArrayList<NoteView> viewList = m_undoViewList.get(m_undoViewList.size() - 1);
+                    m_originalViewList.addAll(viewList);
+                    m_undoViewList.remove(m_undoViewList.size() - 1);
+
+                    for (NoteView view : m_originalViewList)
+                        m_noteContainer.addView(view);
+
+                    Log.i("junu", "undo : " + m_originalViewList.size());
+                }
 
                 return true;
             case R.id.action_redo:
+                if (m_redoViewList.size() > 0) {
+                    ArrayList<NoteView> undoList = new ArrayList<>();
+                    undoList.addAll(m_originalViewList);
+                    m_undoViewList.add(undoList);
+
+                    for (NoteView view : m_originalViewList)
+                        m_noteContainer.removeView(view);
+
+                    m_originalViewList.clear();
+                    ArrayList<NoteView> viewList = m_redoViewList.get(m_redoViewList.size() - 1);
+                    m_originalViewList.addAll(viewList);
+                    m_redoViewList.remove(m_redoViewList.size() - 1);
+
+                    for (NoteView view : m_originalViewList)
+                        m_noteContainer.addView(view);
+
+                    Log.i("junu", "redo : " + m_redoViewList.size());
+                }
 
                 return true;
             case R.id.action_settings:
@@ -534,12 +596,12 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                     setFLRect(noteView, x, y, noteWidth, getDPI(NOTE_HEIGHT_DP, m_metric));
 
-                    m_originalViewList.add(noteView);
-
                     m_workNote = noteView;
 
                     m_beforeY = y;
                     m_beforeX = x;
+
+                    m_isNoteCreated = true;
 
                     // TODO: play sound
                 }
@@ -591,6 +653,21 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 return true;
             case MotionEvent.ACTION_UP:
+                // Undo, Redo List
+                for (ArrayList<NoteView> itemList : m_redoViewList)
+                    itemList.clear();
+                m_redoViewList.clear();
+
+                ArrayList<NoteView> viewList = new ArrayList<>();
+                viewList.addAll(m_originalViewList);
+                m_undoViewList.add(viewList);
+
+                if (m_undoViewList.size() > 10)
+                    m_undoViewList.remove(0);
+
+                if (m_isNoteCreated)
+                    m_originalViewList.add(m_workNote);
+
                 m_beforeWidth = m_workNote.getWidth();
 
                 // Created note and moved.
@@ -663,6 +740,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 m_isOnWork = false;
                 m_isNoteMoved = false;
+                m_isNoteCreated = false;
 
                 m_noteMode = NoteTouch.NONE;
 

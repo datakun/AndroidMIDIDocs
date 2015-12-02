@@ -15,7 +15,7 @@
         app:showAsAction="always" />
     <item
         android:id="@+id/action_repeat"
-        android:icon="@mipmap/ic_repeat_white_48dp"
+        android:icon="@mipmap/ic_repeat_black_48dp"
         android:orderInCategory="3"
         android:title="@string/action_repeat"
         app:showAsAction="always" />
