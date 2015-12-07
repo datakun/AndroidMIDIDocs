@@ -1,5 +1,9 @@
 package com.midi.kimdata.noteeditor;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
@@ -10,6 +14,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -20,11 +25,19 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
+import android.widget.NumberPicker;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.kimdata.values;
 import com.leff.midi.MidiFile;
 import com.leff.midi.MidiTrack;
+import com.leff.midi.event.ProgramChange;
+import com.leff.midi.event.meta.InstrumentName;
+import com.leff.midi.event.meta.KeySignature;
 import com.leff.midi.event.meta.Tempo;
 import com.leff.midi.event.meta.TimeSignature;
 import com.view.kimdata.NoteHorizontalScrollView;
@@ -39,7 +52,6 @@ import java.util.Collections;
 import java.util.Comparator;
 
 public class NoteEditorActivity extends AppCompatActivity implements View.OnTouchListener {
-
     public static final int KEY_RANGE = 84;
 
     public static int TOUCH_OFFSET = 0;
@@ -101,11 +113,14 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     private boolean m_isHoldNote; // To change note width.
     private boolean m_isEditDuration;
 
-    private int m_channel;
-
+    // Project Information
     private int m_tempo;
     private int m_numerator; // For Time Signature
     private int m_denominators; // For Time Signature
+
+    // Channel Information
+    private int m_channel;
+    private int m_program;
 
     private MediaPlayer m_player;
     private String m_tempSoundFile;
@@ -139,9 +154,11 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
         m_channel = 0;
 
-        m_tempo = 100;
+        m_tempo = 120;
         m_numerator = 4;
         m_denominators = 4;
+
+        m_program = 0;
 
         m_player = new MediaPlayer();
         m_player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -232,12 +249,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
             }
         }
 
-        FrameLayout _wholeContainer = (FrameLayout) findViewById(R.id.wholeContainer);
-
         m_timelineIndicator = new View(this);
         m_timelineIndicator.setBackgroundColor(getColor(R.color.colorOpacityWhite));
-
-//        _wholeContainer.addView(m_timelineIndicator);
         m_noteContainer.addView(m_timelineIndicator);
 
         TypedValue tv = new TypedValue();
@@ -271,12 +284,109 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
         m_actionbarMenu = menu;
 
+        MenuItem instrumentMenu = m_actionbarMenu.findItem(R.id.action_instrument);
+        instrumentMenu.setTitle(values.instruments[m_program]);
+
+        MenuItem undoMenu = m_actionbarMenu.findItem(R.id.action_undo);
+        undoMenu.setEnabled(false);
+
+        MenuItem redoMenu = m_actionbarMenu.findItem(R.id.action_redo);
+        redoMenu.setEnabled(false);
+
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_instrument: {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Select instrument");
+                builder.setItems(values.instruments, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+
+                        m_program = which;
+
+                        Toast toast = Toast.makeText(getApplicationContext(),
+                                "Choose a " + values.instruments[m_program], Toast.LENGTH_SHORT);
+                        toast.show();
+
+                        MenuItem instMenu = m_actionbarMenu.findItem(R.id.action_instrument);
+                        instMenu.setTitle(values.instruments[m_program]);
+                    }
+
+                });
+
+                builder.show();
+            }
+
+            return true;
+            case R.id.action_time_signature: {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Select time signature");
+                builder.setItems(values.timeSignature, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+
+                        String signature = values.timeSignature[which];
+                        m_numerator = Integer.parseInt(signature.split("/")[0]);
+                        m_denominators = Integer.parseInt(signature.split("/")[1]);
+
+                        Toast toast = Toast.makeText(getApplicationContext(),
+                                "Choose a " + values.timeSignature[which], Toast.LENGTH_SHORT);
+                        toast.show();
+
+                        MenuItem instMenu = m_actionbarMenu.findItem(R.id.action_time_signature);
+                        instMenu.setTitle(values.timeSignature[which]);
+                    }
+
+                });
+
+                builder.show();
+            }
+
+            return true;
+            case R.id.action_tempo: {
+                LayoutInflater inflater = (LayoutInflater)
+                        getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                final View npView = inflater.inflate(R.layout.dialog_number_picker, null);
+                final NumberPicker picker = (NumberPicker) npView.findViewById(R.id.pickerTempo);
+                picker.setMinValue(50);
+                picker.setMaxValue(250);
+                picker.setValue(m_tempo);
+                picker.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
+                AlertDialog dlg = new AlertDialog.Builder(this)
+                        .setTitle("Choose a tempo")
+                        .setView(npView)
+                        .setPositiveButton("OK",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int whichButton) {
+                                        m_tempo = picker.getValue();
+
+                                        Toast toast = Toast.makeText(getApplicationContext(),
+                                                "Choose a " + m_tempo + " BPM", Toast.LENGTH_SHORT);
+                                        toast.show();
+
+                                        MenuItem instMenu = m_actionbarMenu.findItem(R.id.action_tempo);
+                                        instMenu.setTitle(m_tempo + " BPM");
+                                    }
+                                })
+                        .setNegativeButton("Cancel",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int whichButton) {
+                                    }
+                                })
+                        .create();
+
+                dlg.show();
+            }
+
+            return true;
             case R.id.action_play_stop:
                 if (!m_isPlaying)
                     makeMIDIFile("/playing.mid");
@@ -305,7 +415,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     redoList.addAll(m_originalViewList);
                     m_redoViewList.add(redoList);
 
-                    Log.i("junu", "undo : " + m_originalViewList.size());
+                    MenuItem redoMenu = m_actionbarMenu.findItem(R.id.action_redo);
+                    redoMenu.setEnabled(true);
 
                     for (NoteView view : m_originalViewList)
                         m_noteContainer.removeView(view);
@@ -318,7 +429,10 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     for (NoteView view : m_originalViewList)
                         m_noteContainer.addView(view);
 
-                    Log.i("junu", "undo : " + m_originalViewList.size());
+                    if (m_undoViewList.size() == 0) {
+                        MenuItem undoMenu = m_actionbarMenu.findItem(R.id.action_undo);
+                        undoMenu.setEnabled(false);
+                    }
                 }
 
                 return true;
@@ -327,6 +441,9 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     ArrayList<NoteView> undoList = new ArrayList<>();
                     undoList.addAll(m_originalViewList);
                     m_undoViewList.add(undoList);
+
+                    MenuItem undoMenu = m_actionbarMenu.findItem(R.id.action_undo);
+                    undoMenu.setEnabled(true);
 
                     for (NoteView view : m_originalViewList)
                         m_noteContainer.removeView(view);
@@ -339,7 +456,10 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     for (NoteView view : m_originalViewList)
                         m_noteContainer.addView(view);
 
-                    Log.i("junu", "redo : " + m_redoViewList.size());
+                    if (m_redoViewList.size() == 0) {
+                        MenuItem redoMenu = m_actionbarMenu.findItem(R.id.action_redo);
+                        redoMenu.setEnabled(false);
+                    }
                 }
 
                 return true;
@@ -374,6 +494,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     private void makeMIDIFile(String filename) {
         MidiTrack tempoTrack = new MidiTrack();
         MidiTrack noteTrack = new MidiTrack();
+        MidiTrack programTrack = new MidiTrack();
 
         TimeSignature ts = new TimeSignature();
         ts.setTimeSignature(m_numerator, m_denominators, TimeSignature.DEFAULT_METER, TimeSignature.DEFAULT_DIVISION);
@@ -384,12 +505,16 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         tempoTrack.insertEvent(ts);
         tempoTrack.insertEvent(tempo);
 
+        ProgramChange pc = new ProgramChange(0, m_channel, m_program);
+        programTrack.insertEvent(pc);
+
         for (NoteView view : m_originalViewList) {
             noteTrack.insertNote(m_channel, view.getPitch(), view.getVelocity(), view.getTick(), view.getDuration());
         }
 
         ArrayList<MidiTrack> tracks = new ArrayList<>();
         tracks.add(tempoTrack);
+        tracks.add(programTrack);
         tracks.add(noteTrack);
 
         if (isExternalStorageWritable()) {
@@ -661,6 +786,9 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 ArrayList<NoteView> viewList = new ArrayList<>();
                 viewList.addAll(m_originalViewList);
                 m_undoViewList.add(viewList);
+
+                MenuItem undoMenu = m_actionbarMenu.findItem(R.id.action_undo);
+                undoMenu.setEnabled(true);
 
                 if (m_undoViewList.size() > 10)
                     m_undoViewList.remove(0);

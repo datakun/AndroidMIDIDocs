@@ -1,40 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_instrument"
+        android:orderInCategory="1"
+        android:title="Piano"
+        app:showAsAction="always|withText" />
+    <item
+        android:id="@+id/action_time_signature"
+        android:orderInCategory="2"
+        android:title="4/4"
+        app:showAsAction="always|withText" />
+    <item
+        android:id="@+id/action_tempo"
+        android:orderInCategory="3"
+        android:title="120 BPM"
+        app:showAsAction="always|withText" />
     <!--<item-->
         <!--android:id="@+id/action_skip_previous"-->
         <!--android:icon="@mipmap/ic_skip_previous_white_48dp"-->
-        <!--android:orderInCategory="1"-->
+        <!--android:orderInCategory="4"-->
         <!--android:title="@string/action_skip_previous"-->
         <!--app:showAsAction="always" />-->
     <item
         android:id="@+id/action_play_stop"
         android:icon="@mipmap/ic_play_arrow_white_48dp"
-        android:orderInCategory="2"
+        android:orderInCategory="5"
         android:title="@string/action_play_pause"
         app:showAsAction="always" />
     <item
         android:id="@+id/action_repeat"
         android:icon="@mipmap/ic_repeat_black_48dp"
-        android:orderInCategory="3"
+        android:orderInCategory="6"
         android:title="@string/action_repeat"
         app:showAsAction="always" />
     <item
         android:id="@+id/action_undo"
         android:icon="@mipmap/ic_undo_white_48dp"
-        android:orderInCategory="4"
+        android:orderInCategory="7"
         android:title="@string/action_undo"
         app:showAsAction="always" />
     <item
         android:id="@+id/action_redo"
         android:icon="@mipmap/ic_redo_white_48dp"
-        android:orderInCategory="5"
+        android:orderInCategory="8"
         android:title="@string/action_redo"
         app:showAsAction="always" />
     <item
         android:id="@+id/action_settings"
         android:icon="@mipmap/ic_settings_white_48dp"
-        android:orderInCategory="6"
+        android:orderInCategory="9"
         android:title="@string/action_settings"
         app:showAsAction="always" />
 </menu>
