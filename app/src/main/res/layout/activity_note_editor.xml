@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/wholeContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#101010"
-    android:id="@+id/wholeContainer"
     tools:context=".NoteEditorActivity">
 
     <LinearLayout
@@ -24,11 +24,11 @@
             android:orientation="horizontal">
 
             <Switch
+                android:id="@+id/editSwitch"
                 android:layout_width="@dimen/key_width"
                 android:layout_height="@dimen/note_height"
-                android:text="Edit"
                 android:checked="true"
-                android:id="@+id/editSwitch" />
+                android:text="Edit" />
 
             <HorizontalScrollView
                 android:id="@+id/rulerHScrollView"
@@ -36,12 +36,20 @@
                 android:layout_height="match_parent"
                 android:scrollbars="none">
 
-                <LinearLayout
-                    android:id="@+id/rulerContainer"
+                <FrameLayout
+                    android:id="@+id/rulerWholeContainer"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
-                </LinearLayout>
+                    android:layout_height="match_parent">
+
+                    <LinearLayout
+                        android:id="@+id/rulerContainer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal">
+
+                    </LinearLayout>
+                </FrameLayout>
+
 
             </HorizontalScrollView>
         </LinearLayout>

@@ -1,9 +1,9 @@
 package com.midi.kimdata.noteeditor;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
@@ -25,9 +25,7 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.NumberPicker;
-import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,8 +34,6 @@ import com.kimdata.values;
 import com.leff.midi.MidiFile;
 import com.leff.midi.MidiTrack;
 import com.leff.midi.event.ProgramChange;
-import com.leff.midi.event.meta.InstrumentName;
-import com.leff.midi.event.meta.KeySignature;
 import com.leff.midi.event.meta.Tempo;
 import com.leff.midi.event.meta.TimeSignature;
 import com.view.kimdata.NoteHorizontalScrollView;
@@ -93,13 +89,18 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
     private Menu m_actionbarMenu;
 
-    private boolean m_isOnWork;
+    private boolean m_isCreatedNote;
 
     private NoteTouch m_noteMode;
 
     private ArrayList<NoteView> m_originalViewList;
     private ArrayList<ArrayList<NoteView>> m_undoViewList;
     private ArrayList<ArrayList<NoteView>> m_redoViewList;
+
+    // for Key
+    private ArrayList<TextView> m_keyViewList;
+    private int m_keyViewBeforePitch;
+    private Drawable m_keyViewBeforeDrawable;
 
     private int m_workNoteRight;
 
@@ -128,6 +129,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
     private View m_timelineIndicator;
     private Handler m_indicatorTimer;
 
+    private View m_editNoteIndicator;
+
     private boolean m_isPlaying;
     private boolean m_beforeSwitchState;
     private boolean m_isRepeat;
@@ -140,7 +143,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         m_metric = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(m_metric);
 
-        m_isOnWork = false;
+        m_isCreatedNote = false;
         m_noteMode = NoteTouch.NONE;
         m_isNoteMoved = false;
         m_isNoteCreated = false;
@@ -160,6 +163,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
         m_program = 0;
 
+        m_keyViewBeforePitch = 0;
+
         m_player = new MediaPlayer();
         m_player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
@@ -173,14 +178,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 m_editSwitch.setChecked(m_beforeSwitchState);
 
-                if (m_isRepeat) {
-                    Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
-                        public void run() {
-                            playStopSound();
-                        }
-                    }, 1000);
-                }
+                if (m_isRepeat)
+                    playStopSound();
             }
         });
         m_tempSoundFile = "playing.mid";
@@ -268,6 +267,27 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 m_noteVScrollView.setScrollY(getDPI(NOTE_HEIGHT_DP, m_metric) * moveOctave);
             }
         }, 500);
+
+        LinearLayout keyContainer = (LinearLayout) findViewById(R.id.keyContainer);
+
+        m_keyViewList = new ArrayList<>();
+        for (int i = 0; i < keyContainer.getChildCount(); i++) {
+//            final MediaPlayer keyPlayer = new MediaPlayer();
+            TextView keyView = (TextView) keyContainer.getChildAt(i);
+            keyView.setOnTouchListener(keyTouchListener);
+            Drawable baseBackground = keyView.getBackground();
+            keyView.setTag(baseBackground);
+
+            m_keyViewList.add(keyView);
+        }
+
+        FrameLayout rulerWholeContainer = (FrameLayout) findViewById(R.id.rulerWholeContainer);
+
+        m_editNoteIndicator = new View(this);
+        m_editNoteIndicator.setBackgroundColor(getColor(R.color.colorOpacityWhite));
+        rulerWholeContainer.addView(m_editNoteIndicator);
+
+        setFLRect(m_editNoteIndicator, 0, 0 - getDPI(NOTE_HEIGHT_DP, m_metric), getDPI(NOTE_DP, m_metric), getDPI(NOTE_HEIGHT_DP, m_metric));
 
         m_beforeSwitchState = m_editSwitch.isChecked();
     }
@@ -391,12 +411,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 if (!m_isPlaying)
                     makeMIDIFile("/playing.mid");
 
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    public void run() {
-                        playStopSound();
-                    }
-                }, 1000);
+                playStopSound();
 
                 return true;
             case R.id.action_repeat:
@@ -562,6 +577,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 m_isPlaying = true;
 
+                // TODO : indicator timer
                 m_indicatorTimer.postDelayed(new Runnable() {
                     public void run() {
                         if (m_isPlaying) {
@@ -611,6 +627,15 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         view.setLayoutParams(params);
     }
 
+    public static void setLLRect(View view, int x, int y, int width, int height) {
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) view.getLayoutParams();
+        params.width = width;
+        params.height = height;
+        view.setX(x);
+        view.setY(y);
+        view.setLayoutParams(params);
+    }
+
     public static int getDPI(int size, DisplayMetrics metrics) {
         return (size * metrics.densityDpi) / DisplayMetrics.DENSITY_DEFAULT;
     }
@@ -630,6 +655,56 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
             m_noteHScrollView.setOnScrollChangeListener(null);
             m_noteHScrollView.setScrollX(scrollX);
             m_noteHScrollView.setOnScrollChangeListener(noteScrollListener);
+        }
+    };
+
+    private View.OnTouchListener keyTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            int pitch = PITCH_TOP - ((int) (v.getY() + event.getY()) / getDPI(NOTE_HEIGHT_DP, m_metric));
+
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    m_keyViewBeforeDrawable = v.getBackground();
+                    v.setBackgroundResource(R.drawable.key_pressed);
+
+                    m_keyViewBeforePitch = pitch;
+
+                    playPitch(pitch);
+
+                    m_noteVScrollView.setLockScroll(true);
+
+                    return true;
+
+                case MotionEvent.ACTION_MOVE:
+                    if (pitch != m_keyViewBeforePitch) {
+                        View newView = m_keyViewList.get(PITCH_TOP - pitch);
+                        View beforeView = m_keyViewList.get(PITCH_TOP - m_keyViewBeforePitch);
+
+                        beforeView.setBackground(m_keyViewBeforeDrawable);
+
+                        m_keyViewBeforeDrawable = newView.getBackground();
+                        newView.setBackgroundResource(R.drawable.key_pressed);
+
+                        m_keyViewBeforePitch = pitch;
+
+                        playPitch(pitch);
+                    }
+
+                    return true;
+
+                case MotionEvent.ACTION_UP:
+                    for (View keyView : m_keyViewList) {
+                        Drawable baseDrawable = (Drawable) keyView.getTag();
+                        keyView.setBackground(baseDrawable);
+                    }
+
+                    m_noteVScrollView.setLockScroll(false);
+
+                    return true;
+            }
+
+            return false;
         }
     };
 
@@ -682,7 +757,6 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    Log.i("junu", "move out");
 
                     break;
                 case MotionEvent.ACTION_UP:
@@ -729,43 +803,90 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     m_isNoteCreated = true;
 
                     // TODO: play sound
+                    int pitch = PITCH_TOP - ((int) m_workNote.getY() / getDPI(NOTE_HEIGHT_DP, m_metric));
+
+                    View newView = m_keyViewList.get(PITCH_TOP - pitch);
+
+                    m_keyViewBeforeDrawable = newView.getBackground();
+                    newView.setBackgroundResource(R.drawable.key_pressed);
+
+                    m_keyViewBeforePitch = pitch;
+
+                    playPitch(pitch);
+
+                    // Note indicator
+                    setFLRect(m_editNoteIndicator,
+                            x,
+                            0,
+                            noteWidth,
+                            getDPI(NOTE_HEIGHT_DP, m_metric));
                 }
 
-                m_isOnWork = true;
+                m_isCreatedNote = true;
 
                 m_noteHScrollView.setLockScroll(true);
                 m_noteVScrollView.setLockScroll(true);
 
                 return true;
             case MotionEvent.ACTION_MOVE:
-                Log.i("junu", "moved base");
-                if ((m_isOnWork && m_noteMode == NoteTouch.NONE) || (m_noteMode == NoteTouch.MID && !m_isEditDuration)) {
+                if ((m_isCreatedNote && m_noteMode == NoteTouch.NONE) ||
+                        (m_noteMode == NoteTouch.MID && !m_isEditDuration)) {
                     m_workNote.setX(x);
                     m_workNote.setY(y);
+
+                    if (m_beforeY != y) {
+                        m_beforeY = y;
+
+                        m_isHoldNote = false;
+
+                        // TODO: play sound
+                        int pitch = PITCH_TOP - ((int) m_workNote.getY() / getDPI(NOTE_HEIGHT_DP, m_metric));
+
+                        View newView = m_keyViewList.get(PITCH_TOP - pitch);
+                        View beforeView = m_keyViewList.get(PITCH_TOP - m_keyViewBeforePitch);
+
+                        beforeView.setBackground(m_keyViewBeforeDrawable);
+
+                        m_keyViewBeforeDrawable = newView.getBackground();
+                        newView.setBackgroundResource(R.drawable.key_pressed);
+
+                        m_keyViewBeforePitch = pitch;
+
+                        playPitch(pitch);
+                    }
                 } else if (m_noteMode == NoteTouch.LEFT) {
                     if (m_workNoteRight - x <= 0)
                         return true;
 
-                    setFLRect(m_workNote, x, (int) m_workNote.getY(), m_workNoteRight - x, getDPI(NOTE_HEIGHT_DP, m_metric));
+                    setFLRect(m_workNote,
+                            x,
+                            (int) m_workNote.getY(),
+                            m_workNoteRight - x,
+                            getDPI(NOTE_HEIGHT_DP, m_metric));
                 } else if (m_noteMode == NoteTouch.RIGHT) {
                     if ((int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric) <= 0)
                         return true;
 
-                    setFLRect(m_workNote, (int) m_workNote.getX(), (int) m_workNote.getY(), (int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric), getDPI(NOTE_HEIGHT_DP, m_metric));
+                    setFLRect(m_workNote,
+                            (int) m_workNote.getX(),
+                            (int) m_workNote.getY(),
+                            (int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric),
+                            getDPI(NOTE_HEIGHT_DP, m_metric));
                 }
 
+                // Edit note duration
                 if (m_isEditDuration && m_workNote.getX() + (m_workNote.getWidth() / 2) > event.getX()) {
-                    setFLRect(m_workNote, x, (int) m_workNote.getY(), m_workNoteRight - x + TOUCH_OFFSET, getDPI(NOTE_HEIGHT_DP, m_metric));
+                    setFLRect(m_workNote,
+                            x,
+                            (int) m_workNote.getY(),
+                            m_workNoteRight - x + TOUCH_OFFSET,
+                            getDPI(NOTE_HEIGHT_DP, m_metric));
                 } else if (m_isEditDuration && m_workNote.getX() + (m_workNote.getWidth() / 2) < event.getX()) {
-                    setFLRect(m_workNote, (int) m_workNote.getX(), (int) m_workNote.getY(), (int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric) + TOUCH_OFFSET, getDPI(NOTE_HEIGHT_DP, m_metric));
-                }
-
-                if (m_beforeY != y) {
-                    m_beforeY = y;
-
-                    m_isHoldNote = false;
-
-                    // TODO: play sound
+                    setFLRect(m_workNote,
+                            (int) m_workNote.getX(),
+                            (int) m_workNote.getY(),
+                            (int) (x - m_workNote.getX()) + getDPI(NOTE_DP, m_metric) + TOUCH_OFFSET,
+                            getDPI(NOTE_HEIGHT_DP, m_metric));
                 }
 
                 if (Math.abs(m_beforeX - x) > getDPI(NOTE_DP / 2, m_metric)) {
@@ -775,6 +896,13 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 }
 
                 m_isNoteMoved = true;
+
+                // Note indicator
+                setFLRect(m_editNoteIndicator,
+                        (int) m_workNote.getX(),
+                        0,
+                        m_workNote.getWidth(),
+                        getDPI(NOTE_HEIGHT_DP, m_metric));
 
                 return true;
             case MotionEvent.ACTION_UP:
@@ -854,11 +982,8 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                     int pitch = PITCH_TOP - ((int) m_workNote.getY() / getDPI(NOTE_HEIGHT_DP, m_metric));
 
                     m_workNote.setPitch(pitch);
-                    // TODO : ON, OFF
                     m_workNote.setTick((int) m_workNote.getX() / getDPI(NOTE_DP, m_metric) * CROTCHET);
                     m_workNote.setDuration(m_workNote.getWidth() / getDPI(NOTE_DP, m_metric) * CROTCHET);
-//                    m_workNote.setOn((int) m_workNote.getX() / getDPI(NOTE_DP, m_metric) * MidiFile.CROTCHET);
-//                    m_workNote.setOff((int) (m_workNote.getX() + m_workNote.getWidth()) / getDPI(NOTE_DP, m_metric) * MidiFile.CROTCHET);
                 }
 
                 Collections.sort(m_originalViewList, noteViewComparator);
@@ -866,7 +991,7 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                 // Initialize.
                 m_workNote = null;
 
-                m_isOnWork = false;
+                m_isCreatedNote = false;
                 m_isNoteMoved = false;
                 m_isNoteCreated = false;
 
@@ -876,6 +1001,18 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
 
                 m_isHoldNote = false;
                 m_isEditDuration = false;
+
+                for (View keyView : m_keyViewList) {
+                    Drawable baseDrawable = (Drawable) keyView.getTag();
+                    keyView.setBackground(baseDrawable);
+                }
+
+                // Note indicator
+                setFLRect(m_editNoteIndicator,
+                        x,
+                        0,
+                        0,
+                        getDPI(NOTE_HEIGHT_DP, m_metric));
 
                 m_noteHScrollView.setLockScroll(false);
                 m_noteVScrollView.setLockScroll(false);
@@ -895,6 +1032,59 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
         }
 
         return false;
+    }
+
+    private void playPitch(int pitch) {
+        MidiTrack tempoTrack = new MidiTrack();
+        MidiTrack noteTrack = new MidiTrack();
+        MidiTrack programTrack = new MidiTrack();
+
+        TimeSignature ts = new TimeSignature();
+        ts.setTimeSignature(4, 4, TimeSignature.DEFAULT_METER, TimeSignature.DEFAULT_DIVISION);
+
+        Tempo tempo = new Tempo();
+        tempo.setBpm(60);
+
+        tempoTrack.insertEvent(ts);
+        tempoTrack.insertEvent(tempo);
+
+        ProgramChange pc = new ProgramChange(0, 0, m_program);
+        programTrack.insertEvent(pc);
+
+        noteTrack.insertNote(m_channel, pitch, 127, 0, CROTCHET);
+
+        ArrayList<MidiTrack> tracks = new ArrayList<>();
+        tracks.add(tempoTrack);
+        tracks.add(programTrack);
+        tracks.add(noteTrack);
+
+        if (isExternalStorageWritable()) {
+            MidiFile midi = new MidiFile(MidiFile.DEFAULT_RESOLUTION, tracks);
+
+            String dirPath = getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).getPath();
+            String keyFilename = dirPath + "/key.mid";
+            File output = new File(keyFilename);
+
+            try {
+                midi.writeToFile(output);
+
+                FileInputStream input = new FileInputStream(output);
+                MediaPlayer keyPlayer = new MediaPlayer();
+                keyPlayer.reset();
+                keyPlayer.setDataSource(input.getFD());
+                input.close();
+                keyPlayer.prepare();
+                keyPlayer.start();
+                keyPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mp) {
+                        mp.release();
+                    }
+                });
+            } catch (IOException e) {
+                System.err.println(e);
+            }
+        }
     }
 
     private final static Comparator<NoteView> noteViewComparator = new Comparator<NoteView>() {

@@ -8,6 +8,8 @@
     <uses-permission-sdk-23 android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission-sdk-23 android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
+    <uses-feature android:name="android.hardware.usb.host" />
+
     <uses-feature
         android:name="android.software.midi"
         android:required="true" />
