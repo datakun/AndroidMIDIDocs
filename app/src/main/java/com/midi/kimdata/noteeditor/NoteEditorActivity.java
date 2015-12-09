@@ -755,6 +755,13 @@ public class NoteEditorActivity extends AppCompatActivity implements View.OnTouc
                         }
                     }, 1000);
 
+                    // Note indicator
+                    setFLRect(m_editNoteIndicator,
+                            (int) m_workNote.getX(),
+                            0,
+                            m_workNote.getWidth(),
+                            getDPI(NOTE_HEIGHT_DP, m_metric));
+
                     break;
                 case MotionEvent.ACTION_MOVE:
 
